@@ -5,20 +5,19 @@ from model import Suggestion, Encounter
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
     sparql = SPARQLWrapper(endpoint)
-    query = """
+    query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>
             select * where {{
             ?species a avio:species .
             ?species skos:prefLabel ?prefLabel .
-            ?prefLabel bif:contains "'{}*'" .
+            ?prefLabel bif:contains "'{partial}*'" .
             OPTIONAL {{
                     ?species avio:linkToEnglishWikipedia ?wikipediaLink .
                     }}
             }}
-            limit {}
-            """.format(
-        partial, limit
-    )
+            limit {limit}
+            """
+    
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
@@ -85,48 +84,35 @@ def append_previews_to(lookup_table, endpoint=DBPEDIA_SPARQL_ENDPOINT):
 def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_ENDPOINT):
     sparql = SPARQLWrapper(endpoint)
     sparql.setCredentials(LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD)
-    query = """
+    query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>
-            PREFIX encounter: <https://encounter.pastabytes.com/>
-            PREFIX encounter-location: <https://encounter.pastabytes.com/location/>
-            PREFIX encounter-ontology: <https://encounter.pastabytes.com/ontology/>
+            PREFIX encounter: <https://encounter.pastabytes.com/v0.1.0/>
+            PREFIX encounter-location: <https://encounter.pastabytes.com/v0.1.0/location/>
+            PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
             PREFIX pixelfed: <https://pixelfed.pastabytes.com/>
 
             INSERT DATA {{
-                GRAPH <{}> {{
-                    encounter:{} a encounter-ontology:Encounter ;
-                        encounter-ontology:hasLocation encounter-location:{} ;
-                        encounter-ontology:hasTime "{}"^^xsd:long ;
-                        encounter-ontology:hasUser <{}> ;
-                        encounter-ontology:hasEvidence <{}> .
+                GRAPH <{PASTABYTES_ENCOUNTER}> {{
+                    encounter:{encounter.id} a encounter-ontology:Encounter ;
+                        encounter-ontology:hasLocation encounter-location:{encounter.location.id} ;
+                        encounter-ontology:hasTime "{encounter.time}"^^xsd:long ;
+                        encounter-ontology:hasUser <{encounter.user}> ;
+                        encounter-ontology:hasEvidence <{encounter.evidence}> .
 
-                    encounter-location:{} a encounter-ontology:Location ;
-                        encounter-ontology:hasLatitude "{}"^^xsd:float ;
-                        encounter-ontology:hasLongitude "{}"^^xsd:float .
+                    encounter-location:{encounter.location.id} a encounter-ontology:Location ;
+                        encounter-ontology:hasLatitude "{encounter.location.latitude}"^^xsd:float ;
+                        encounter-ontology:hasLongitude "{encounter.location.longitude}"^^xsd:float .
 
-                    <{}> a encounter-ontology:User .
+                    <{encounter.user}> a encounter-ontology:User .
 
-                    <{}> a encounter-ontology:Evidence ;
-                        encounter-ontology:depicts <{}> .
+                    <{encounter.evidence}> a encounter-ontology:Evidence ;
+                        encounter-ontology:depicts <{encounter.species}> .
                     
-                    <{}> a encounter-ontology:Bird .
+                    <{encounter.species}> a encounter-ontology:Bird .
                 }}
             }}
-            """.format(
-        PASTABYTES_ENCOUNTER,
-        encounter.id,
-        encounter.location.id,
-        encounter.time,
-        encounter.user,
-        encounter.evidence,
-        encounter.location.id,
-        encounter.location.latitude,
-        encounter.location.longitude,
-        encounter.user,
-        encounter.evidence,
-        encounter.species,
-        encounter.species,
-    )
+            """
+    
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     sparql.method = "POST"
