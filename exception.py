@@ -1,0 +1,2 @@
+class SPARQLException(Exception):
+    pass
