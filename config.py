@@ -5,7 +5,7 @@ REFRESH_TOKEN_URL = "http://pastabytes.test:8080/oauth/token"
 REVOKE_TOKEN_URL = "http://pastabytes.test:8080/oauth/revoke"
 CLIENT_ID = "1"
 CLIENT_SECRET = ""
-REDIRECT_URI = "http://avio-kg.pastabytes.test:8501"
+REDIRECT_URI = "http://encounter.pastabytes.test:8501"
 SCOPE = "read"
 
 # PIXELFED
