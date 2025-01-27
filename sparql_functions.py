@@ -1,5 +1,5 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
-from config import AVIO_SPARQL_ENDPOINT, DBPEDIA_SPARQL_ENDPOINT, PASTABYTES_ENCOUNTER, LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD
+from config import AVIO_SPARQL_ENDPOINT, AVIO_SPARQL_AUTH_ENDPOINT, DBPEDIA_SPARQL_ENDPOINT, PASTABYTES_ENCOUNTER, LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD
 from model import Suggestion, Encounter
 
 
@@ -81,8 +81,9 @@ def append_previews_to(lookup_table, endpoint=DBPEDIA_SPARQL_ENDPOINT):
         ]
 
 
-def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_ENDPOINT):
+def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
     sparql = SPARQLWrapper(endpoint)
+    sparql.setHTTPAuth('DIGEST')
     sparql.setCredentials(LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD)
     query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>
