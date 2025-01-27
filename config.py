@@ -16,6 +16,7 @@ PIXELFED_BASE_URL_SCHEME = os.getenv("PIXELFED_BASE_URL_SCHEME", "http")
 
 # SEMANTIC REPOSITORIES
 AVIO_SPARQL_ENDPOINT = os.getenv("AVIO_SPARQL_ENDPOINT", "http://localhost:8890/sparql")
+AVIO_SPARQL_AUTH_ENDPOINT = os.getenv("AVIO_SPARQL_AUTH_ENDPOINT", "http://localhost:8890/sparql-auth")
 DBPEDIA_SPARQL_ENDPOINT = os.getenv("DBPEDIA_SPARQL_ENDPOINT", "http://dbpedia.org/sparql")
 
 # CREDENTIALS
