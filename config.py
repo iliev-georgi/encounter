@@ -25,3 +25,6 @@ LOCAL_SPARQL_PASSWORD = os.getenv("LOCAL_SPARQL_PASSWORD")
 
 # SEMANTIC CONTEXT
 PASTABYTES_ENCOUNTER = os.getenv("PASTABYTES_ENCOUNTER", "https://encounter.pastabytes.com")
+
+# OTHER
+APP_TITLE = os.getenv("APP_TITLE", "Encounter")
