@@ -9,6 +9,13 @@ from auth import sso_login_pixelfed
 from helper import register_encounter
 from pixelfed_functions import get_statuses, get_attached_media
 
+st.set_page_config(page_title=APP_TITLE)
+
+st.header(APP_TITLE)
+
+st.image("images/skyline_2_cropped_mono_hi_contrast.png")
+
+st.divider()
 
 USER_INFO = sso_login_pixelfed()
 
