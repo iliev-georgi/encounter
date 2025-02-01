@@ -1,7 +1,6 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
-from config import AVIO_SPARQL_ENDPOINT, AVIO_SPARQL_AUTH_ENDPOINT, DBPEDIA_SPARQL_ENDPOINT, PASTABYTES_ENCOUNTER, LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD
+from config import AVIO_SPARQL_ENDPOINT, AVIO_SPARQL_AUTH_ENDPOINT, DBPEDIA_SPARQL_ENDPOINT, LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD
 from model import Suggestion, Encounter
-
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
     sparql = SPARQLWrapper(endpoint)
@@ -93,7 +92,7 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
             PREFIX pixelfed: <https://pixelfed.pastabytes.com/>
 
             INSERT DATA {{
-                GRAPH <{PASTABYTES_ENCOUNTER}> {{
+                GRAPH <{encounter.context}> {{
                     encounter:{encounter.id} a encounter-ontology:Encounter ;
                         encounter-ontology:hasLocation encounter-location:{encounter.location.id} ;
                         encounter-ontology:hasTime "{encounter.time}"^^xsd:long ;

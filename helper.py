@@ -23,8 +23,9 @@ def register_encounter(
     user=None,
     evidence=None,
     species=None,
-    latitude=42.698334,
-    longitude=23.319941,
+    latitude=Location.latitude,
+    longitude=Location.longitude,
+    context=Encounter.context
 ):
 
     location_seed = f"{latitude}_{longitude}"
@@ -42,6 +43,7 @@ def register_encounter(
         species=species,
         time=time,
         location=location,
+        context=context,
     )
 
     try:
