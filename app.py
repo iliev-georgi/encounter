@@ -2,7 +2,8 @@ import streamlit as st
 from config import APP_TITLE
 from auth import sso_login_pixelfed
 from streamlit_option_menu import option_menu
-from options.annotate import render
+from options.annotate import render_annotate
+from options.explore import render_explore
 
 st.set_page_config(page_title=APP_TITLE)
 
@@ -20,5 +21,10 @@ if "token" in st.session_state:
         icons=['pin-map', 'map'], 
         menu_icon="cast", default_index=0, orientation="horizontal")
     
-    if selected == "Annotate":
-        render(USER_INFO)
+    match selected:
+        case "Annotate":
+            render_annotate(USER_INFO)
+        case "Explore":
+            render_explore(USER_INFO)
+        case _:
+            render_annotate(USER_INFO)

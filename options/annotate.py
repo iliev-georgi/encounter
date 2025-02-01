@@ -9,7 +9,7 @@ from helper import register_encounter
 from pixelfed_functions import get_statuses, get_attached_media
 
 
-def render(user_info):
+def render_annotate(user_info):
 
     to_annotate_list = get_statuses(user_info["id"], st.session_state["token"]["access_token"])
 

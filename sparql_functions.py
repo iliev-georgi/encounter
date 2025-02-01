@@ -1,6 +1,15 @@
-from SPARQLWrapper import SPARQLWrapper, JSON
-from config import AVIO_SPARQL_ENDPOINT, AVIO_SPARQL_AUTH_ENDPOINT, DBPEDIA_SPARQL_ENDPOINT, LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD
-from model import Suggestion, Encounter
+from SPARQLWrapper import SPARQLWrapper, JSON, JSONLD
+from rdflib import RDF, Namespace
+from config import (
+    AVIO_SPARQL_ENDPOINT,
+    AVIO_SPARQL_AUTH_ENDPOINT,
+    DBPEDIA_SPARQL_ENDPOINT,
+    LOCAL_SPARQL_USER,
+    LOCAL_SPARQL_PASSWORD,
+    PASTABYTES_ENCOUNTER,
+)
+from model import Suggestion, Encounter, Location
+
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
     sparql = SPARQLWrapper(endpoint)
@@ -16,7 +25,7 @@ def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
             }}
             limit {limit}
             """
-    
+
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
@@ -75,14 +84,14 @@ def append_previews_to(lookup_table, endpoint=DBPEDIA_SPARQL_ENDPOINT):
         suggestion.thumbnail = thumbnails.get(suggestion.wikipediaLink, ((None, None)))[
             0
         ]
-        suggestion.abstract = thumbnails.get(suggestion.wikipediaLink, ((None, "__No description available__")))[
-            1
-        ]
+        suggestion.abstract = thumbnails.get(
+            suggestion.wikipediaLink, ((None, "__No description available__"))
+        )[1]
 
 
 def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
     sparql = SPARQLWrapper(endpoint)
-    sparql.setHTTPAuth('DIGEST')
+    sparql.setHTTPAuth("DIGEST")
     sparql.setCredentials(LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD)
     query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>
@@ -112,12 +121,112 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
                 }}
             }}
             """
-    
+
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     sparql.method = "POST"
     result = sparql.query().convert()
     if result is not None:
-        return result.get("results").get("bindings")[0].get("callret-0").get("value").endswith("-- done")
+        return (
+            result.get("results")
+            .get("bindings")[0]
+            .get("callret-0")
+            .get("value")
+            .endswith("-- done")
+        )
 
     return False
+
+
+def collect_encounters(
+    context: str = PASTABYTES_ENCOUNTER, endpoint: str = AVIO_SPARQL_AUTH_ENDPOINT
+) -> list[Encounter]:
+
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setHTTPAuth("DIGEST")
+    sparql.setCredentials(LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD)
+    ENCOUNTER_ONTOLOGY = Namespace("https://encounter.pastabytes.com/v0.1.0/ontology/")
+    encounters = []
+    query = f"""
+            PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
+
+            CONSTRUCT 
+            WHERE {{
+                GRAPH <{context}> {{
+                    ?encounter_id a encounter-ontology:Encounter ;
+                        encounter-ontology:hasLocation ?encounter_location_id ;
+                        encounter-ontology:hasTime ?encounter_time ;
+                        encounter-ontology:hasUser ?encounter_user ;
+                        encounter-ontology:hasEvidence ?encounter_evidence .
+
+                    ?encounter_location_id a encounter-ontology:Location ;
+                        encounter-ontology:hasLatitude ?encounter_location_latitude ;
+                        encounter-ontology:hasLongitude ?encounter_location_longitude .
+
+                    ?encounter_user a encounter-ontology:User .
+
+                    ?encounter_evidence a encounter-ontology:Evidence ;
+                        encounter-ontology:depicts ?encounter_species .
+                    
+                    ?encounter_species a encounter-ontology:Bird .
+                }}
+            }}
+            """
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSONLD)
+    sparql.method = "POST"
+    result = sparql.query().convert()
+
+    for encounter_id in result.subjects(RDF.type, ENCOUNTER_ONTOLOGY.Encounter):
+        location_id = result.value(encounter_id, ENCOUNTER_ONTOLOGY.hasLocation)
+
+        latitude = result.value(location_id, ENCOUNTER_ONTOLOGY.hasLatitude)
+        longitude = result.value(location_id, ENCOUNTER_ONTOLOGY.hasLongitude)
+
+        user = result.value(encounter_id, ENCOUNTER_ONTOLOGY.hasUser)
+        evidence = result.value(encounter_id, ENCOUNTER_ONTOLOGY.hasEvidence)
+        species = result.value(evidence, ENCOUNTER_ONTOLOGY.depicts)
+        time = result.value(encounter_id, ENCOUNTER_ONTOLOGY.hasTime)
+
+        location = Location(
+            id=str(location_id), latitude=float(latitude), longitude=float(longitude)
+        )
+
+        encounters.append(
+            Encounter(
+                id=str(encounter_id),
+                user=str(user),
+                evidence=str(evidence),
+                species=str(species),
+                time=int(time),
+                location=location,
+                context=str(context),
+            )
+        )
+
+    return encounters
+
+
+def get_labels(
+    species: list[str], endpoint=AVIO_SPARQL_ENDPOINT, lang: str = "en"
+) -> dict:
+    sparql = SPARQLWrapper(endpoint)
+    query = f"""
+            PREFIX avio: <http://www.yso.fi/onto/avio/>
+            SELECT ?species ?prefLabel WHERE {{
+            VALUES ?species {{ {" ".join(species)} }}
+            ?species skos:prefLabel ?prefLabel .
+            FILTER (lang(?prefLabel) = "{lang}")
+            }}
+            """
+
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    species_label_mappings = dict()
+    for result in results["results"]["bindings"]:
+        species_label_mappings[result["species"]["value"]] = result["prefLabel"][
+            "value"
+        ]
+
+    return species_label_mappings
