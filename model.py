@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from config import PASTABYTES_ENCOUNTER
 
 
 @dataclass
@@ -13,8 +14,8 @@ class Suggestion():
 @dataclass
 class Location():
     id: str
-    latitude: float
-    longitude: float
+    latitude: float = 42.698334
+    longitude: float = 23.319941 # Sofia, Bulgaria
 
 @dataclass
 class Encounter():
@@ -24,3 +25,4 @@ class Encounter():
     species: str
     time: int
     location: Location
+    context: str = PASTABYTES_ENCOUNTER
