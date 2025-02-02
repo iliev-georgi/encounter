@@ -2,6 +2,10 @@ from model import Location, Encounter
 import hashlib
 from sparql_functions import insert_encounter
 from exception import SPARQLException
+import base64, io
+from PIL import Image
+import branca
+from datetime import datetime
 
 
 def join_labels(lookup_table):
@@ -52,3 +56,38 @@ def register_encounter(
             raise SPARQLException(result.response.read())
     except Exception:
         print("SPARQL update failed.")
+
+
+def get_jpeg_thumbnail(attached_media: bytes, x=150, y=150):
+
+    base64encoded_media = base64.b64encode(attached_media)
+
+    buffer = io.BytesIO()
+    imgdata = base64.b64decode(base64encoded_media)
+    img = Image.open(io.BytesIO(imgdata))
+    img.thumbnail((x, y), Image.Resampling.LANCZOS)  # x, y
+    img.save(buffer, "JPEG")
+
+    return base64.b64encode(buffer.getvalue())
+
+
+def build_popup_iframe(encounter: Encounter, thumbnail: bytes) -> branca.element.IFrame:
+
+    html = """
+    <body style='font-size: 0.65em; font-family: sans-serif;
+'>
+    <p>On <strong>{}</strong></p>
+    <a href="{}" target="_blank"><img src="data:image/jpg;base64,{}">
+    
+    """.format
+
+    iframe = branca.element.IFrame(
+            html=html(
+                datetime.fromtimestamp(encounter.time).strftime('%B %d, %Y'),
+                encounter.species,
+                thumbnail.decode(),
+            ),
+            width=200,
+        )
+    
+    return iframe
