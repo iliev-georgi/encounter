@@ -33,4 +33,8 @@ class ToAnnotate():
     id: str
     preview_url: str
     content: str
-    time: int 
+    time: int
+    annotated: bool = False
+    label: str = None
+    lat: float = None
+    lng: float = None
