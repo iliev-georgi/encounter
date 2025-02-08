@@ -10,7 +10,7 @@ def render_explore(
 ):  # User info not accessed on this stage but may be necessary to add personalized filtering functionality later
 
     encounters = (
-        collect_encounters(context = "https://encounter.pastabytes.test")
+        collect_encounters()
     )  # Providing a context other than the default one allows you flexibility to experiment with dummy encounters in development
 
     m = folium.Map()
