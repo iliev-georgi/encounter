@@ -81,7 +81,7 @@ def render_annotate(user_info):
                 with pin_tab:
                     map = folium.Map()
                     map.add_child(folium.LatLngPopup())
-                    map.add_child(folium.Marker((to_annotate.lat, to_annotate.lng), tooltip=to_annotate.label))
+                    map.add_child(folium.Marker(location=(to_annotate.lat, to_annotate.lng), icon=folium.Icon(color="darkblue",icon="crow", prefix='fa'), tooltip=to_annotate.label))
                     st_data = st_folium(map, center=(to_annotate.lat, to_annotate.lng), zoom=100)
                     if st_data.get("last_clicked"):
                         st.session_state.last_location = (

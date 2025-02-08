@@ -29,6 +29,7 @@ def render_explore(
         folium.Marker(
             (encounter.location.latitude, encounter.location.longitude),
             tooltip=tooltips.get(encounter.species, "Unknown"),
+            icon=folium.Icon(color="darkblue",icon="crow", prefix='fa'),
             popup=popup,
         ).add_to(m)
 
