@@ -99,6 +99,21 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
             PREFIX encounter-location: <https://encounter.pastabytes.com/v0.1.0/location/>
             PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
             PREFIX pixelfed: <https://pixelfed.pastabytes.com/>
+    
+            DELETE WHERE {{
+            GRAPH <{encounter.context}> {{   
+                    ?encounter_id a encounter-ontology:Encounter ;
+                        encounter-ontology:hasLocation ?encounter_location_id ;
+                        encounter-ontology:hasTime ?encounter_time ;
+                        encounter-ontology:hasUser ?encounter_user ;
+                        encounter-ontology:hasEvidence ?encounter_evidence .
+
+                    <{encounter.evidence}> a encounter-ontology:Evidence ;
+                        encounter-ontology:depicts ?encounter_species .
+                    
+                    ?encounter_species a encounter-ontology:Bird .
+                }}
+            }}
 
             INSERT DATA {{
                 GRAPH <{encounter.context}> {{
