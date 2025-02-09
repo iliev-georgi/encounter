@@ -1,12 +1,12 @@
 import requests
 from config import PIXELFED_BASE_URL, PIXELFED_BASE_URL_SCHEME
-from collections import namedtuple
+from model import ToAnnotate
 from urllib.parse import urlparse, urlunparse
 from dateutil import parser
 import json
 
 
-def get_statuses(user_id, bearer_token):
+def get_statuses(user_id: str, bearer_token: str) -> list[ToAnnotate]:
     user_statuses = json.loads(
         requests.get(
             f"{PIXELFED_BASE_URL_SCHEME}://{PIXELFED_BASE_URL}/api/v1/accounts/{user_id}/statuses",
@@ -15,8 +15,6 @@ def get_statuses(user_id, bearer_token):
     )
 
     to_annotate_list = []
-
-    ToAnnotate = namedtuple("ToAnnotate", "id preview_url content time")
 
     for user_status in user_statuses:
         preview_url_parsed = urlparse(

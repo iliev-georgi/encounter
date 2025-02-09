@@ -8,7 +8,7 @@ from config import (
     LOCAL_SPARQL_PASSWORD,
     PASTABYTES_ENCOUNTER,
 )
-from model import Suggestion, Encounter, Location
+from model import Suggestion, Encounter, Location, ToAnnotate
 
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
@@ -99,6 +99,21 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
             PREFIX encounter-location: <https://encounter.pastabytes.com/v0.1.0/location/>
             PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
             PREFIX pixelfed: <https://pixelfed.pastabytes.com/>
+    
+            DELETE WHERE {{
+            GRAPH <{encounter.context}> {{   
+                    ?encounter_id a encounter-ontology:Encounter ;
+                        encounter-ontology:hasLocation ?encounter_location_id ;
+                        encounter-ontology:hasTime ?encounter_time ;
+                        encounter-ontology:hasUser ?encounter_user ;
+                        encounter-ontology:hasEvidence ?encounter_evidence .
+
+                    <{encounter.evidence}> a encounter-ontology:Evidence ;
+                        encounter-ontology:depicts ?encounter_species .
+                    
+                    ?encounter_species a encounter-ontology:Bird .
+                }}
+            }}
 
             INSERT DATA {{
                 GRAPH <{encounter.context}> {{
@@ -139,12 +154,10 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
 
 
 def collect_encounters(
-    context: str = PASTABYTES_ENCOUNTER, endpoint: str = AVIO_SPARQL_AUTH_ENDPOINT
+    context: str = PASTABYTES_ENCOUNTER, endpoint: str = AVIO_SPARQL_ENDPOINT
 ) -> list[Encounter]:
 
     sparql = SPARQLWrapper(endpoint)
-    sparql.setHTTPAuth("DIGEST")
-    sparql.setCredentials(LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD)
     ENCOUNTER_ONTOLOGY = Namespace("https://encounter.pastabytes.com/v0.1.0/ontology/")
     encounters = []
     query = f"""
@@ -230,3 +243,77 @@ def get_labels(
         ]
 
     return species_label_mappings
+
+
+def append_annotation_state_to(
+    statuses: list[ToAnnotate],
+    endpoint=AVIO_SPARQL_ENDPOINT,
+    context: str = PASTABYTES_ENCOUNTER,
+):
+    evidence_list = [f"<{status.preview_url}>" for status in statuses]
+    query = f"""
+            PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
+
+            CONSTRUCT 
+            {{   
+                    ?encounter_id a encounter-ontology:Encounter ;
+                        encounter-ontology:hasLocation ?encounter_location_id ;
+                        encounter-ontology:hasTime ?encounter_time ;
+                        encounter-ontology:hasUser ?encounter_user ;
+                        encounter-ontology:hasEvidence ?encounter_evidence .
+
+                    ?encounter_location_id a encounter-ontology:Location ;
+                        encounter-ontology:hasLatitude ?encounter_location_latitude ;
+                        encounter-ontology:hasLongitude ?encounter_location_longitude .
+
+                    ?encounter_user a encounter-ontology:User .
+
+                    ?encounter_evidence a encounter-ontology:Evidence ;
+                        encounter-ontology:depicts ?encounter_species .
+                    
+                    ?encounter_species a encounter-ontology:Bird .
+                }}
+
+            WHERE {{ 
+            GRAPH <{context}> {{
+                    VALUES ?encounter_evidence {{ {" ".join(evidence_list)} }}
+                    ?encounter_id a encounter-ontology:Encounter ;
+                        encounter-ontology:hasLocation ?encounter_location_id ;
+                        encounter-ontology:hasTime ?encounter_time ;
+                        encounter-ontology:hasUser ?encounter_user ;
+                        encounter-ontology:hasEvidence ?encounter_evidence .
+
+                    ?encounter_location_id a encounter-ontology:Location ;
+                        encounter-ontology:hasLatitude ?encounter_location_latitude ;
+                        encounter-ontology:hasLongitude ?encounter_location_longitude .
+
+                    ?encounter_user a encounter-ontology:User .
+
+                    ?encounter_evidence a encounter-ontology:Evidence ;
+                        encounter-ontology:depicts ?encounter_species .
+                    
+                    ?encounter_species a encounter-ontology:Bird .
+            }}
+            }}
+            """
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSONLD)
+    sparql.method = "POST"
+    result = sparql.query().convert()
+
+    ENCOUNTER_ONTOLOGY = Namespace("https://encounter.pastabytes.com/v0.1.0/ontology/")
+
+    for evidence in result.objects(predicate=ENCOUNTER_ONTOLOGY.hasEvidence):
+        for status in statuses:
+            if status.preview_url == str(evidence):
+                status.annotated = True
+                encounter = next(result.subjects(predicate=ENCOUNTER_ONTOLOGY.hasEvidence, object=evidence))
+                location = next(result.objects(subject=encounter, predicate=ENCOUNTER_ONTOLOGY.hasLocation))
+                lng = next(result.objects(subject=location, predicate=ENCOUNTER_ONTOLOGY.hasLongitude))
+                lat = next(result.objects(subject=location, predicate=ENCOUNTER_ONTOLOGY.hasLatitude))
+                species = next(result.objects(subject=evidence, predicate=ENCOUNTER_ONTOLOGY.depicts))
+                species_label_map = get_labels([f"<{str(species)}>"])
+                status.label = species_label_map.get(str(species), "Unknown")
+                status.lng = float(lng)
+                status.lat = float(lat)

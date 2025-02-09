@@ -3,6 +3,7 @@ import folium
 from sparql_functions import collect_encounters, get_labels
 from pixelfed_functions import get_attached_media
 from helper import get_jpeg_thumbnail, build_popup_iframe
+from model import Location
 
 
 def render_explore(
@@ -17,6 +18,8 @@ def render_explore(
 
     tooltips = get_labels([f"<{encounter.species}>" for encounter in encounters])
 
+    center_x, center_y = Location.latitude, Location.longitude
+
     for encounter in encounters:
         attached_media = get_attached_media(
             encounter.evidence, st.session_state["token"]["access_token"]
@@ -29,12 +32,11 @@ def render_explore(
         folium.Marker(
             (encounter.location.latitude, encounter.location.longitude),
             tooltip=tooltips.get(encounter.species, "Unknown"),
+            icon=folium.Icon(color="darkblue", icon="crow", prefix="fa"),
             popup=popup,
         ).add_to(m)
+        center_x, center_y = encounter.location.latitude, encounter.location.longitude
 
-    m.location = (
-        encounter.location.latitude,
-        encounter.location.longitude,
-    )  # Focus map on last added encounter
+    m.location = (center_x, center_y)  # Focus map on last added encounter
 
     st.components.v1.html(folium.Figure().add_child(m).render(), height=500)

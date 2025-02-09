@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from collections import namedtuple
 from config import PASTABYTES_ENCOUNTER
 
 
@@ -26,3 +27,14 @@ class Encounter():
     time: int
     location: Location
     context: str = PASTABYTES_ENCOUNTER
+
+@dataclass
+class ToAnnotate():
+    id: str
+    preview_url: str
+    content: str
+    time: int
+    annotated: bool = False
+    label: str = None
+    lat: float = None
+    lng: float = None
