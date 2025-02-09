@@ -33,7 +33,9 @@ def render_annotate(user_info):
             )
             st.image(BytesIO(attached_media), caption=to_annotate.content)
         with column2:
-            check_mark = ":white_check_mark:" if to_annotate.annotated else ":grey_question:"
+            check_mark = (
+                ":white_check_mark:" if to_annotate.annotated else ":grey_question:"
+            )
             with st.expander(f"Annotate {check_mark}"):
                 search_tab, pin_tab = st.tabs(
                     [":mag: Search species", ":round_pushpin: Pin location"]
@@ -79,10 +81,31 @@ def render_annotate(user_info):
                                 ],
                             )
                 with pin_tab:
+                    center_x, center_y = Location.latitude, Location.longitude
                     map = folium.Map()
                     map.add_child(folium.LatLngPopup())
-                    map.add_child(folium.Marker(location=(to_annotate.lat, to_annotate.lng), icon=folium.Icon(color="darkblue",icon="crow", prefix='fa'), tooltip=to_annotate.label))
-                    st_data = st_folium(map, center=(to_annotate.lat, to_annotate.lng), zoom=100)
+                    if all(
+                        mandatory is not None
+                        for mandatory in [
+                            to_annotate.lat,
+                            to_annotate.lng,
+                            to_annotate.label,
+                        ]
+                    ):
+                        map.add_child(
+                            folium.Marker(
+                                location=(to_annotate.lat, to_annotate.lng),
+                                icon=folium.Icon(
+                                    color="darkblue", icon="crow", prefix="fa"
+                                ),
+                                tooltip=to_annotate.label,
+                            )
+                        )
+                        center_x, center_y = to_annotate.lat, to_annotate.lng
+
+                    st_data = st_folium(
+                        map, center=(center_x, center_y), zoom=10
+                    )
                     if st_data.get("last_clicked"):
                         st.session_state.last_location = (
                             st_data["last_clicked"]["lat"],
