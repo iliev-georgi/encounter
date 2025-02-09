@@ -100,19 +100,19 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
             PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
             PREFIX pixelfed: <https://pixelfed.pastabytes.com/>
     
-            DELETE WHERE {{
+            DELETE {{
             GRAPH <{encounter.context}> {{   
                     ?encounter_id a encounter-ontology:Encounter ;
                         encounter-ontology:hasLocation ?encounter_location_id ;
                         encounter-ontology:hasTime ?encounter_time ;
                         encounter-ontology:hasUser ?encounter_user ;
-                        encounter-ontology:hasEvidence ?encounter_evidence .
+                        encounter-ontology:hasEvidence <{encounter.evidence}> .
 
                     <{encounter.evidence}> a encounter-ontology:Evidence ;
                         encounter-ontology:depicts ?encounter_species .
-                    
-                    ?encounter_species a encounter-ontology:Bird .
                 }}
+            }} WHERE  {{
+                ?encounter_id encounter-ontology:hasEvidence <{encounter.evidence}> .
             }}
 
             INSERT DATA {{
@@ -147,7 +147,7 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
             .get("bindings")[0]
             .get("callret-0")
             .get("value")
-            .endswith("-- done")
+            .endswith(("-- done", "-- done\n"))
         )
 
     return False
@@ -308,11 +308,31 @@ def append_annotation_state_to(
         for status in statuses:
             if status.preview_url == str(evidence):
                 status.annotated = True
-                encounter = next(result.subjects(predicate=ENCOUNTER_ONTOLOGY.hasEvidence, object=evidence))
-                location = next(result.objects(subject=encounter, predicate=ENCOUNTER_ONTOLOGY.hasLocation))
-                lng = next(result.objects(subject=location, predicate=ENCOUNTER_ONTOLOGY.hasLongitude))
-                lat = next(result.objects(subject=location, predicate=ENCOUNTER_ONTOLOGY.hasLatitude))
-                species = next(result.objects(subject=evidence, predicate=ENCOUNTER_ONTOLOGY.depicts))
+                encounter = next(
+                    result.subjects(
+                        predicate=ENCOUNTER_ONTOLOGY.hasEvidence, object=evidence
+                    )
+                )
+                location = next(
+                    result.objects(
+                        subject=encounter, predicate=ENCOUNTER_ONTOLOGY.hasLocation
+                    )
+                )
+                lng = next(
+                    result.objects(
+                        subject=location, predicate=ENCOUNTER_ONTOLOGY.hasLongitude
+                    )
+                )
+                lat = next(
+                    result.objects(
+                        subject=location, predicate=ENCOUNTER_ONTOLOGY.hasLatitude
+                    )
+                )
+                species = next(
+                    result.objects(
+                        subject=evidence, predicate=ENCOUNTER_ONTOLOGY.depicts
+                    )
+                )
                 species_label_map = get_labels([f"<{str(species)}>"])
                 status.label = species_label_map.get(str(species), "Unknown")
                 status.lng = float(lng)
