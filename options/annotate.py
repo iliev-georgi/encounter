@@ -25,7 +25,8 @@ def render_annotate(user_info):
 
     for to_annotate in to_annotate_list:
         if "last_location" not in st.session_state:
-            st.session_state.last_location = (Location.latitude, Location.longitude)
+            st.session_state.last_location = dict()
+            st.session_state.last_location[to_annotate.id] = (Location.latitude, Location.longitude)
         column1, column2 = st.columns([1, 2])
         with column1:
             attached_media = get_attached_media(
@@ -76,8 +77,8 @@ def render_annotate(user_info):
                                     user_info.get("url"),
                                     to_annotate.preview_url,
                                     suggestion.species,
-                                    st.session_state.last_location[0],
-                                    st.session_state.last_location[1],
+                                    st.session_state.last_location[to_annotate.id][0],
+                                    st.session_state.last_location[to_annotate.id][1],
                                 ],
                             )
                 with pin_tab:
@@ -107,7 +108,7 @@ def render_annotate(user_info):
                         map, center=(center_x, center_y), zoom=10
                     )
                     if st_data.get("last_clicked"):
-                        st.session_state.last_location = (
+                        st.session_state.last_location[to_annotate.id] = (
                             st_data["last_clicked"]["lat"],
                             st_data["last_clicked"]["lng"],
                         )
