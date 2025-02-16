@@ -6,6 +6,20 @@ import base64, io
 from PIL import Image
 import branca
 from datetime import datetime
+import streamlit as st
+
+
+def clear_keyup_input_for(input_id: str):
+    to_clear = next(
+        (
+            key
+            for key in st.session_state.keys()
+            if key.startswith(f"st_keyup_{input_id}")
+        ),
+        False,
+    )
+    if to_clear:
+        st.session_state[to_clear] = ""
 
 
 def join_labels(lookup_table):
@@ -23,13 +37,14 @@ def join_labels(lookup_table):
 
 
 def register_encounter(
+    input_id=None,
     time=None,
     user=None,
     evidence=None,
     species=None,
     latitude=Location.latitude,
     longitude=Location.longitude,
-    context=Encounter.context
+    context=Encounter.context,
 ):
 
     location_seed = f"{latitude}_{longitude}"
@@ -57,6 +72,8 @@ def register_encounter(
     except Exception:
         print("SPARQL update failed.")
 
+    clear_keyup_input_for(input_id)
+
 
 def get_jpeg_thumbnail(attached_media: bytes, x=150, y=150):
 
@@ -74,20 +91,19 @@ def get_jpeg_thumbnail(attached_media: bytes, x=150, y=150):
 def build_popup_iframe(encounter: Encounter, thumbnail: bytes) -> branca.element.IFrame:
 
     html = """
-    <body style='font-size: 0.65em; font-family: sans-serif;
-'>
+    <body style='font-size: 0.65em; font-family: sans-serif;'>
     <p>On <strong>{}</strong></p>
     <a href="{}" target="_blank"><img src="data:image/jpg;base64,{}">
     
     """.format
 
     iframe = branca.element.IFrame(
-            html=html(
-                datetime.fromtimestamp(encounter.time).strftime('%B %d, %Y'),
-                encounter.species,
-                thumbnail.decode(),
-            ),
-            width=200,
-        )
-    
+        html=html(
+            datetime.fromtimestamp(encounter.time).strftime("%B %d, %Y"),
+            encounter.species,
+            thumbnail.decode(),
+        ),
+        width=200,
+    )
+
     return iframe
