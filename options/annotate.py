@@ -14,6 +14,7 @@ from pixelfed_functions import get_statuses, get_attached_media
 from model import Location, ToAnnotate
 import folium
 from streamlit_folium import st_folium
+from datetime import datetime
 
 
 def update_plot_and_register_encounter(
@@ -139,7 +140,9 @@ def render_annotate(user_info):
             attached_media = get_attached_media(
                 to_annotate.preview_url, st.session_state["token"]["access_token"]
             )
-            st.image(BytesIO(attached_media), caption=to_annotate.content)
+            with st.container(border=True):
+                st.caption(datetime.fromtimestamp(int(to_annotate.time)).strftime('%B %d, %Y'))
+                st.image(BytesIO(attached_media), caption=to_annotate.content)
         with column2:
             check_mark = (
                 ":white_check_mark:" if to_annotate.annotated else ":grey_question:"
