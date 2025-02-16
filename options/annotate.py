@@ -26,6 +26,10 @@ def update_plot_and_register_encounter(
     longitude: float,
 ):
     
+    update_verb = "Updating" if to_annotate.annotated else "Registering"
+    
+    st.toast(f"{update_verb} encounter...")
+
     # update location and label on map
     to_annotate.label = marker_label
     to_annotate.lat = latitude
@@ -41,6 +45,8 @@ def update_plot_and_register_encounter(
         latitude=latitude,
         longitude=longitude,
     )
+
+    st.toast(f"Done {update_verb.lower()} encounter.")
 
 
 @st.fragment
@@ -80,7 +86,13 @@ def plot_encounter_location(to_annotate):
 
 @st.fragment
 def suggest_species(to_annotate, user_info):
-    name = st_keyup("Enter bird name", key=to_annotate.id, debounce=500)
+    search_bar_prefill = to_annotate.label if to_annotate.annotated else ""
+    name = st_keyup(
+        "Enter bird name",
+        placeholder=search_bar_prefill,
+        key=to_annotate.id,
+        debounce=500,
+    )
     if name and len(name) > 3:
         lookup_table = get_filtered_list(name)
         append_previews_to(lookup_table)
@@ -135,19 +147,29 @@ def render_annotate(user_info):
             Location.latitude,
             Location.longitude,
         )
+        check_mark = (
+            ":white_check_mark:" if to_annotate.annotated else ":grey_question:"
+        )
+        evidence_help = (
+            f"There is already an encounter with the **{to_annotate.label}** linking to this evidence. You can still modify it using the search bar and the location picker on the right"
+            if to_annotate.annotated
+            else "There is no encounter linked to this evidence. Create one using the search bar and the location picker on the right"
+        )
         column1, column2 = st.columns([1, 2])
         with column1:
             attached_media = get_attached_media(
                 to_annotate.preview_url, st.session_state["token"]["access_token"]
             )
             with st.container(border=True):
-                st.caption(datetime.fromtimestamp(int(to_annotate.time)).strftime('%B %d, %Y'))
+                st.caption(
+                    datetime.fromtimestamp(int(to_annotate.time)).strftime("%B %d, %Y"),
+                    help=evidence_help,
+                )
                 st.image(BytesIO(attached_media), caption=to_annotate.content)
         with column2:
-            check_mark = (
-                ":white_check_mark:" if to_annotate.annotated else ":grey_question:"
-            )
-            with st.expander(f"Annotate {check_mark}"):
+            with st.expander(
+                f"Annotate {check_mark}",
+            ):
                 search_tab, pin_tab = st.tabs(
                     [":mag: Search species", ":round_pushpin: Pin location"]
                 )
