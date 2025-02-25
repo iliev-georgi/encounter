@@ -25,9 +25,9 @@ def update_plot_and_register_encounter(
     latitude: float,
     longitude: float,
 ):
-    
+
     update_verb = "Updating" if to_annotate.annotated else "Registering"
-    
+
     st.toast(f"{update_verb} encounter...")
 
     # update location and label on map
@@ -84,6 +84,10 @@ def plot_encounter_location(to_annotate):
             to_annotate.label = "Unknown"
 
 
+def move_page(id: str, step: int):
+    st.session_state.page[id] = st.session_state.page[id] + step
+
+
 @st.fragment
 def suggest_species(to_annotate, user_info):
     search_bar_prefill = to_annotate.label if to_annotate.annotated else ""
@@ -94,12 +98,18 @@ def suggest_species(to_annotate, user_info):
         debounce=500,
     )
     if name and len(name) > 3:
-        lookup_table = get_filtered_list(name)
+        lookup_table = get_filtered_list(
+            name, limit=10, offset=st.session_state.page[to_annotate.id] * 10
+        )  # remove hardcoding
         append_previews_to(lookup_table)
         lookup_table = join_labels(lookup_table)
     else:
+        st.session_state.last_location[to_annotate.id][0]
         lookup_table = dict()
+    result_set_count = len(lookup_table)
+    more = True if result_set_count == 10 else False  # remove hardcoding
     for suggestion in lookup_table:
+        result_set_count -= 1
         column1, column2 = st.columns([1, 2])
         with column1:
             try:
@@ -131,6 +141,22 @@ def suggest_species(to_annotate, user_info):
                     longitude=st.session_state.last_location[to_annotate.id][1],
                 ),
             )
+        if result_set_count < 1:
+            column1, _, column2 = st.columns(3)
+            if st.session_state.page[to_annotate.id] > 0:
+                with column1:
+                    st.button(
+                        label="Prev :black_left_pointing_double_triangle_with_vertical_bar:",
+                        on_click=move_page,
+                        args=[to_annotate.id, -1],
+                    )
+            if more:
+                with column2:
+                    st.button(
+                        label="Next :black_right_pointing_double_triangle_with_vertical_bar:",
+                        on_click=move_page,
+                        args=[to_annotate.id, 1],
+                    )
 
 
 def render_annotate(user_info):
@@ -143,6 +169,9 @@ def render_annotate(user_info):
     for to_annotate in to_annotate_list:
         if "last_location" not in st.session_state:
             st.session_state.last_location = dict()
+        if "page" not in st.session_state:
+            st.session_state.page = dict()
+        st.session_state.page[to_annotate.id] = 0
         st.session_state.last_location[to_annotate.id] = (
             Location.latitude,
             Location.longitude,

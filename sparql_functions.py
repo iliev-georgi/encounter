@@ -11,11 +11,11 @@ from config import (
 from model import Suggestion, Encounter, Location, ToAnnotate
 
 
-def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
+def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20, offset=0):
     sparql = SPARQLWrapper(endpoint)
     query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>
-            select * where {{
+            SELECT * WHERE {{
             ?species a avio:species .
             ?species skos:prefLabel ?prefLabel .
             ?prefLabel bif:contains "'{partial}*'" .
@@ -23,7 +23,8 @@ def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20):
                     ?species avio:linkToEnglishWikipedia ?wikipediaLink .
                     }}
             }}
-            limit {limit}
+            LIMIT {limit}
+            OFFSET {offset}
             """
 
     sparql.setQuery(query)
