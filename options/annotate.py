@@ -122,7 +122,7 @@ def suggest_species(to_annotate, user_info):
     more = True if result_set_count == RESULT_PAGE_SIZE else False
     for suggestion in lookup_table:
         result_set_count -= 1
-        column1, column2 = st.columns([1, 2])
+        column1, column2, column3 = st.columns([3, 5, 1])
         with column1:
             try:
                 if (
@@ -143,7 +143,6 @@ def suggest_species(to_annotate, user_info):
             st.button(
                 suggestion.prefLabel,
                 on_click=update_plot_and_register_encounter,
-                help=suggestion.abstract,
                 kwargs=dict(
                     to_annotate=to_annotate,
                     marker_label=suggestion.prefLabel,
@@ -153,6 +152,11 @@ def suggest_species(to_annotate, user_info):
                     longitude=st.session_state.last_location[to_annotate.id][1],
                 ),
             )
+        with column3:
+            st.caption(
+                    "",
+                    help=suggestion.abstract,
+                )
         if result_set_count < 1:
             column1, column2, _ = st.columns([1, 1, 4])
             if st.session_state.page[current_search_term_evidence_pair] > 0:
