@@ -25,9 +25,9 @@ def update_plot_and_register_encounter(
     latitude: float,
     longitude: float,
 ):
-    
+
     update_verb = "Updating" if to_annotate.annotated else "Registering"
-    
+
     st.toast(f"{update_verb} encounter...")
 
     # update location and label on map
@@ -47,6 +47,17 @@ def update_plot_and_register_encounter(
     )
 
     st.toast(f"Done {update_verb.lower()} encounter.")
+
+
+def move_page(current_search_term_evidence_pair: str, step: int):
+    st.session_state.page[current_search_term_evidence_pair] = (
+        st.session_state.page[current_search_term_evidence_pair] + step
+    )
+
+
+def init_page_marker_for(current_search_term_evidence_pair):
+    if current_search_term_evidence_pair not in st.session_state.page:
+        st.session_state.page[current_search_term_evidence_pair] = 0
 
 
 @st.fragment
@@ -93,13 +104,24 @@ def suggest_species(to_annotate, user_info):
         key=to_annotate.id,
         debounce=500,
     )
+    current_search_term_evidence_pair = f"{name}_{to_annotate.id}"
+    init_page_marker_for(current_search_term_evidence_pair)
     if name and len(name) > 3:
-        lookup_table = get_filtered_list(name)
+        lookup_table = get_filtered_list(
+            name,
+            limit=RESULT_PAGE_SIZE,
+            offset=st.session_state.page[current_search_term_evidence_pair]
+            * RESULT_PAGE_SIZE,
+        )
         append_previews_to(lookup_table)
         lookup_table = join_labels(lookup_table)
     else:
+        st.session_state.last_location[to_annotate.id][0]
         lookup_table = dict()
+    result_set_count = len(lookup_table)
+    more = True if result_set_count == RESULT_PAGE_SIZE else False
     for suggestion in lookup_table:
+        result_set_count -= 1
         column1, column2 = st.columns([1, 2])
         with column1:
             try:
@@ -131,6 +153,28 @@ def suggest_species(to_annotate, user_info):
                     longitude=st.session_state.last_location[to_annotate.id][1],
                 ),
             )
+        if result_set_count < 1:
+            column1, column2, _ = st.columns([1, 1, 4])
+            if st.session_state.page[current_search_term_evidence_pair] > 0:
+                with column1:
+                    st.button(
+                        label="",
+                        icon=":material/keyboard_double_arrow_left:",
+                        help="previous",
+                        type="tertiary",
+                        on_click=move_page,
+                        args=[current_search_term_evidence_pair, -1],
+                    )
+            if more:
+                with column2:
+                    st.button(
+                        label="",
+                        icon=":material/keyboard_double_arrow_right:",
+                        help="next",
+                        type="tertiary",
+                        on_click=move_page,
+                        args=[current_search_term_evidence_pair, 1],
+                    )
 
 
 def render_annotate(user_info):
@@ -140,20 +184,26 @@ def render_annotate(user_info):
     )
     append_annotation_state_to(to_annotate_list)
 
+    # Initialize state
+    if "last_location" not in st.session_state:
+        st.session_state.last_location = dict()
+    if "page" not in st.session_state:
+        st.session_state.page = dict()
+
     for to_annotate in to_annotate_list:
-        if "last_location" not in st.session_state:
-            st.session_state.last_location = dict()
         st.session_state.last_location[to_annotate.id] = (
             Location.latitude,
             Location.longitude,
         )
         check_mark = (
-            ":white_check_mark:" if to_annotate.annotated else ":grey_question:"
+            ":material/check_circle:"
+            if to_annotate.annotated
+            else ":material/indeterminate_question_box:"
         )
         evidence_help = (
-            f"There is already an encounter with the **{to_annotate.label}** linking to this evidence. You can still modify it using the search bar and the location picker on the right"
+            f"There is already an encounter with the **{to_annotate.label}** linking to this evidence. You can still modify it using the search bar and the location picker in the *Annotate* section"
             if to_annotate.annotated
-            else "There is no encounter linked to this evidence. Create one using the search bar and the location picker on the right"
+            else "There is no encounter linked to this evidence. Create one using the search bar and the location picker in the *Annotate* section"
         )
         column1, column2 = st.columns([1, 2])
         with column1:

@@ -28,3 +28,4 @@ PASTABYTES_ENCOUNTER = os.getenv("PASTABYTES_ENCOUNTER", "https://encounter.past
 
 # OTHER
 APP_TITLE = os.getenv("APP_TITLE", "Encounter")
+RESULT_PAGE_SIZE = os.getenv("RESULT_PAGE_SIZE", 5)
