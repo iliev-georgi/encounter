@@ -58,7 +58,15 @@ def move_page(current_search_term_evidence_pair: str, step: int):
     )
 
 
-def init_page_marker_for(current_search_term_evidence_pair):
+def init_page_marker_for(current_search_term_evidence_pair: str, evidence: str):
+    # Remove obsolete pagination states
+    for search_term_evidence_pair in [str(key) for key in st.session_state.page.keys()]:
+        if (
+            search_term_evidence_pair.endswith(f"_{evidence}")
+            and search_term_evidence_pair != current_search_term_evidence_pair
+        ):
+            st.session_state.page.pop(search_term_evidence_pair)
+
     if current_search_term_evidence_pair not in st.session_state.page:
         st.session_state.page[current_search_term_evidence_pair] = 0
 
@@ -107,7 +115,7 @@ def suggest_species(to_annotate, user_info):
         debounce=500,
     )
     current_search_term_evidence_pair = f"{name}_{to_annotate.id}"
-    init_page_marker_for(current_search_term_evidence_pair)
+    init_page_marker_for(current_search_term_evidence_pair, to_annotate.id)
     if name and len(name) > 3:
         lookup_table = get_filtered_list(
             name,
@@ -120,10 +128,8 @@ def suggest_species(to_annotate, user_info):
     else:
         st.session_state.last_location[to_annotate.id][0]
         lookup_table = dict()
-    result_set_count = len(lookup_table)
-    more = True if result_set_count == RESULT_PAGE_SIZE else False
+    
     for suggestion in lookup_table:
-        result_set_count -= 1
         column1, column2, column3 = st.columns([3, 5, 1])
         with column1:
             try:
@@ -156,39 +162,44 @@ def suggest_species(to_annotate, user_info):
             )
         with column3:
             st.caption(
-                    "",
-                    help=suggestion.abstract,
-                )
-        if result_set_count < 1:
-            column1, column2, _ = st.columns([1, 1, 4])
-            if st.session_state.page[current_search_term_evidence_pair] > 0:
-                with column1:
-                    st.button(
-                        label="",
-                        icon=":material/keyboard_double_arrow_left:",
-                        help="previous",
-                        type="tertiary",
-                        on_click=move_page,
-                        args=[current_search_term_evidence_pair, -1],
-                    )
-            if more:
-                with column2:
-                    st.button(
-                        label="",
-                        icon=":material/keyboard_double_arrow_right:",
-                        help="next",
-                        type="tertiary",
-                        on_click=move_page,
-                        args=[current_search_term_evidence_pair, 1],
-                    )
+                "",
+                help=suggestion.abstract,
+            )
+
+    # Pagination
+    less = (
+        True if st.session_state.page[current_search_term_evidence_pair] > 0 else False
+    )
+    more = True if len(lookup_table) == RESULT_PAGE_SIZE else False
+    column1, column2, _ = st.columns([1, 1, 4])
+    if less:
+        with column1:
+            st.button(
+                label="",
+                icon=":material/keyboard_double_arrow_left:",
+                help="previous",
+                type="tertiary",
+                on_click=move_page,
+                args=[current_search_term_evidence_pair, -1],
+            )
+    if more:
+        with column2:
+            st.button(
+                label="",
+                icon=":material/keyboard_double_arrow_right:",
+                help="next",
+                type="tertiary",
+                on_click=move_page,
+                args=[current_search_term_evidence_pair, 1],
+            )
 
 
 @st.fragment
 def render_row(to_annotate: ToAnnotate, user_info):
     st.session_state.last_location[to_annotate.id] = (
-            Location.latitude,
-            Location.longitude,
-        )
+        Location.latitude,
+        Location.longitude,
+    )
     check_mark = (
         ":material/check_circle:"
         if to_annotate.annotated
@@ -212,9 +223,7 @@ def render_row(to_annotate: ToAnnotate, user_info):
             st.image(BytesIO(attached_media), caption=to_annotate.content)
     with column2:
         annotate = st.empty()
-        with annotate.expander(
-            f"Annotate {check_mark}"
-        ):
+        with annotate.expander(f"Annotate {check_mark}"):
             pin_tab, search_tab = st.tabs(
                 [":round_pushpin: Pin location", ":mag: Search species"]
             )
@@ -224,6 +233,7 @@ def render_row(to_annotate: ToAnnotate, user_info):
 
             with search_tab:
                 suggest_species(to_annotate=to_annotate, user_info=user_info)
+
 
 def render_annotate(user_info):
 
