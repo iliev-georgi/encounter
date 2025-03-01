@@ -1,4 +1,5 @@
 import requests
+import streamlit as st
 from config import PIXELFED_BASE_URL, PIXELFED_BASE_URL_SCHEME
 from model import ToAnnotate
 from urllib.parse import urlparse, urlunparse
@@ -35,6 +36,7 @@ def get_statuses(user_id: str, bearer_token: str) -> list[ToAnnotate]:
     return to_annotate_list
 
 
+@st.cache_data
 def get_attached_media(media_url, bearer_token) -> bytes:
     r = requests.get(
         media_url,

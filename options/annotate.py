@@ -35,6 +35,9 @@ def update_plot_and_register_encounter(
     to_annotate.lat = latitude
     to_annotate.lng = longitude
 
+    # update annotation state
+    to_annotate.annotated = True
+
     # persist encounter
     register_encounter(
         input_id=to_annotate.id,
@@ -95,7 +98,6 @@ def plot_encounter_location(to_annotate):
             to_annotate.label = "Unknown"
 
 
-@st.fragment
 def suggest_species(to_annotate, user_info):
     search_bar_prefill = to_annotate.label if to_annotate.annotated else ""
     name = st_keyup(
@@ -181,6 +183,48 @@ def suggest_species(to_annotate, user_info):
                     )
 
 
+@st.fragment
+def render_row(to_annotate: ToAnnotate, user_info):
+    st.session_state.last_location[to_annotate.id] = (
+            Location.latitude,
+            Location.longitude,
+        )
+    check_mark = (
+        ":material/check_circle:"
+        if to_annotate.annotated
+        else ":material/indeterminate_question_box:"
+    )
+    evidence_help = (
+        f"There is already an encounter with the **{to_annotate.label.strip()}** linking to this evidence. You can still modify it using the location picker and the search bar in the *Annotate* section"
+        if to_annotate.annotated
+        else "There is no encounter linked to this evidence. Create one using the location picker and the search bar in the *Annotate* section"
+    )
+    column1, column2 = st.columns([1, 2])
+    with column1:
+        attached_media = get_attached_media(
+            to_annotate.preview_url, st.session_state["token"]["access_token"]
+        )
+        with st.container(border=True):
+            st.caption(
+                datetime.fromtimestamp(int(to_annotate.time)).strftime("%B %d, %Y"),
+                help=evidence_help,
+            )
+            st.image(BytesIO(attached_media), caption=to_annotate.content)
+    with column2:
+        annotate = st.empty()
+        with annotate.expander(
+            f"Annotate {check_mark}"
+        ):
+            pin_tab, search_tab = st.tabs(
+                [":round_pushpin: Pin location", ":mag: Search species"]
+            )
+
+            with pin_tab:
+                plot_encounter_location(to_annotate=to_annotate)
+
+            with search_tab:
+                suggest_species(to_annotate=to_annotate, user_info=user_info)
+
 def render_annotate(user_info):
 
     to_annotate_list = get_statuses(
@@ -195,43 +239,4 @@ def render_annotate(user_info):
         st.session_state.page = dict()
 
     for to_annotate in to_annotate_list:
-        st.session_state.last_location[to_annotate.id] = (
-            Location.latitude,
-            Location.longitude,
-        )
-        check_mark = (
-            ":material/check_circle:"
-            if to_annotate.annotated
-            else ":material/indeterminate_question_box:"
-        )
-        evidence_help = (
-            f"There is already an encounter with the **{to_annotate.label}** linking to this evidence. You can still modify it using the location picker and the search bar in the *Annotate* section"
-            if to_annotate.annotated
-            else "There is no encounter linked to this evidence. Create one using the location picker and the search bar in the *Annotate* section"
-        )
-        column1, column2 = st.columns([1, 2])
-        with column1:
-            attached_media = get_attached_media(
-                to_annotate.preview_url, st.session_state["token"]["access_token"]
-            )
-            with st.container(border=True):
-                st.caption(
-                    datetime.fromtimestamp(int(to_annotate.time)).strftime("%B %d, %Y"),
-                    help=evidence_help,
-                )
-                st.image(BytesIO(attached_media), caption=to_annotate.content)
-        with column2:
-            with st.expander(
-                f"Annotate {check_mark}",
-            ):
-                pin_tab, search_tab = st.tabs(
-                    [":round_pushpin: Pin location", ":mag: Search species"]
-                )
-
-                with pin_tab:
-                    plot_encounter_location(to_annotate=to_annotate)
-
-                with search_tab:
-                    suggest_species(to_annotate=to_annotate, user_info=user_info)
-
-                
+        render_row(to_annotate=to_annotate, user_info=user_info)
