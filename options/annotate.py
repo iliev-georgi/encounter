@@ -205,9 +205,9 @@ def render_annotate(user_info):
             else ":material/indeterminate_question_box:"
         )
         evidence_help = (
-            f"There is already an encounter with the **{to_annotate.label}** linking to this evidence. You can still modify it using the search bar and the location picker in the *Annotate* section"
+            f"There is already an encounter with the **{to_annotate.label}** linking to this evidence. You can still modify it using the location picker and the search bar in the *Annotate* section"
             if to_annotate.annotated
-            else "There is no encounter linked to this evidence. Create one using the search bar and the location picker in the *Annotate* section"
+            else "There is no encounter linked to this evidence. Create one using the location picker and the search bar in the *Annotate* section"
         )
         column1, column2 = st.columns([1, 2])
         with column1:
@@ -224,11 +224,14 @@ def render_annotate(user_info):
             with st.expander(
                 f"Annotate {check_mark}",
             ):
-                search_tab, pin_tab = st.tabs(
-                    [":mag: Search species", ":round_pushpin: Pin location"]
+                pin_tab, search_tab = st.tabs(
+                    [":round_pushpin: Pin location", ":mag: Search species"]
                 )
-                with search_tab:
-                    suggest_species(to_annotate=to_annotate, user_info=user_info)
 
                 with pin_tab:
                     plot_encounter_location(to_annotate=to_annotate)
+
+                with search_tab:
+                    suggest_species(to_annotate=to_annotate, user_info=user_info)
+
+                
