@@ -168,6 +168,7 @@ def suggest_species(to_annotate, user_info):
         with column2:
             st.button(
                 suggestion.prefLabel,
+                key=f"{suggestion.species}_{to_annotate.id}",
                 on_click=update_plot_and_register_encounter,
                 kwargs=dict(
                     to_annotate=to_annotate,
@@ -218,6 +219,7 @@ def suggest_delete(to_annotate: ToAnnotate):
     with column1:
         st.button(
             "Delete",
+            key=f"delete_{to_annotate.id}",
             on_click=update_plot_and_delete_encounter,
             kwargs=dict(
                 to_annotate=to_annotate,
