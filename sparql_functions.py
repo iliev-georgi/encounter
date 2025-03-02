@@ -150,6 +150,49 @@ def insert_encounter(encounter: Encounter, endpoint=AVIO_SPARQL_AUTH_ENDPOINT):
     return False
 
 
+def delete_encounter(
+    evidence: str,
+    endpoint: str = AVIO_SPARQL_AUTH_ENDPOINT,
+    context: str = PASTABYTES_ENCOUNTER,
+):
+    sparql = SPARQLWrapper(endpoint)
+    sparql.setHTTPAuth("DIGEST")
+    sparql.setCredentials(LOCAL_SPARQL_USER, LOCAL_SPARQL_PASSWORD)
+    query = f"""
+            PREFIX avio: <http://www.yso.fi/onto/avio/>
+            PREFIX encounter: <https://encounter.pastabytes.com/v0.1.0/>
+            PREFIX encounter-location: <https://encounter.pastabytes.com/v0.1.0/location/>
+            PREFIX encounter-ontology: <https://encounter.pastabytes.com/v0.1.0/ontology/>
+            PREFIX pixelfed: <https://pixelfed.pastabytes.com/>
+    
+            WITH <{context}>
+            DELETE {{
+                ?encounter_id ?p1 ?o1 .
+                <{evidence}> ?p2 ?o2 .
+            }}
+            WHERE  {{
+                ?encounter_id encounter-ontology:hasEvidence <{evidence}> ;
+                    ?p1 ?o1 .
+                <{evidence}> ?p2 ?o2 .
+            }}
+            """
+
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSON)
+    sparql.method = "POST"
+    result = sparql.query().convert()
+    if result is not None:
+        return (
+            result.get("results")
+            .get("bindings")[0]
+            .get("callret-0")
+            .get("value")
+            .endswith(("-- done", "-- done\n"))
+        )
+
+    return False
+
+
 def collect_encounters(
     context: str = PASTABYTES_ENCOUNTER, endpoint: str = AVIO_SPARQL_ENDPOINT
 ) -> list[Encounter]:

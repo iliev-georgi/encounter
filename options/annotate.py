@@ -8,8 +8,8 @@ from sparql_functions import (
 )
 from st_keyup import st_keyup
 from config import *
-from helper import join_labels
-from helper import register_encounter
+from helper import join_labels, register_encounter
+from sparql_functions import delete_encounter
 from pixelfed_functions import get_statuses, get_attached_media
 from model import Location, ToAnnotate
 import folium
@@ -50,6 +50,24 @@ def update_plot_and_register_encounter(
     )
 
     st.toast(f"Done {update_verb.lower()} encounter.")
+
+
+def update_plot_and_delete_encounter(to_annotate: ToAnnotate):
+
+    st.toast("Deleting encounter...")
+
+    # update location and label on map
+    to_annotate.label = None
+    to_annotate.lat = None
+    to_annotate.lng = None
+
+    # update annotation state
+    to_annotate.annotated = False
+
+    # delete encounter
+    delete_encounter(evidence=to_annotate.preview_url)
+
+    st.toast(f"Encounter deleted.")
 
 
 def move_page(current_search_term_evidence_pair: str, step: int):
@@ -128,7 +146,7 @@ def suggest_species(to_annotate, user_info):
     else:
         st.session_state.last_location[to_annotate.id][0]
         lookup_table = dict()
-    
+
     for suggestion in lookup_table:
         column1, column2, column3 = st.columns([3, 5, 1])
         with column1:
@@ -150,6 +168,7 @@ def suggest_species(to_annotate, user_info):
         with column2:
             st.button(
                 suggestion.prefLabel,
+                key=f"{suggestion.species}_{to_annotate.id}",
                 on_click=update_plot_and_register_encounter,
                 kwargs=dict(
                     to_annotate=to_annotate,
@@ -194,6 +213,25 @@ def suggest_species(to_annotate, user_info):
             )
 
 
+def suggest_delete(to_annotate: ToAnnotate):
+    explain = f"You are about to delete the encounter linking this evidence to the **{to_annotate.label.strip()}**."
+    column1, column2 = st.columns([1, 3])
+    with column1:
+        st.button(
+            "Delete",
+            key=f"delete_{to_annotate.id}",
+            on_click=update_plot_and_delete_encounter,
+            kwargs=dict(
+                to_annotate=to_annotate,
+            ),
+        )
+    with column2:
+        st.caption(
+            "",
+            help=explain,
+        )
+
+
 @st.fragment
 def render_row(to_annotate: ToAnnotate, user_info):
     st.session_state.last_location[to_annotate.id] = (
@@ -224,15 +262,31 @@ def render_row(to_annotate: ToAnnotate, user_info):
     with column2:
         annotate = st.empty()
         with annotate.expander(f"Annotate {check_mark}"):
-            pin_tab, search_tab = st.tabs(
-                [":round_pushpin: Pin location", ":mag: Search species"]
-            )
+            if to_annotate.annotated:
+                pin_tab, search_tab, delete_tab = st.tabs(
+                    [
+                        ":material/pin_drop: Pin location",
+                        ":material/search: Search species",
+                        ":material/delete: Delete encounter",
+                    ]
+                )
+            else:
+                pin_tab, search_tab = st.tabs(
+                    [
+                        ":material/pin_drop: Pin location",
+                        ":material/search: Search species",
+                    ]
+                )
 
             with pin_tab:
                 plot_encounter_location(to_annotate=to_annotate)
 
             with search_tab:
                 suggest_species(to_annotate=to_annotate, user_info=user_info)
+
+            if to_annotate.annotated:
+                with delete_tab:
+                    suggest_delete(to_annotate=to_annotate)
 
 
 def render_annotate(user_info):
