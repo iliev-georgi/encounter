@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from collections import namedtuple
 from config import PASTABYTES_ENCOUNTER
 
 
