@@ -265,14 +265,17 @@ def render_row(to_annotate: ToAnnotate, user_info):
             if to_annotate.annotated:
                 pin_tab, search_tab, delete_tab = st.tabs(
                     [
-                        ":round_pushpin: Pin location",
-                        ":mag: Search species",
+                        ":material/pin_drop: Pin location",
+                        ":material/search: Search species",
                         ":material/delete: Delete encounter",
                     ]
                 )
             else:
                 pin_tab, search_tab = st.tabs(
-                    [":round_pushpin: Pin location", ":mag: Search species"]
+                    [
+                        ":material/pin_drop: Pin location",
+                        ":material/search: Search species",
+                    ]
                 )
 
             with pin_tab:
