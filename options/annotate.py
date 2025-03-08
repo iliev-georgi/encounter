@@ -9,7 +9,7 @@ from sparql_functions import (
 from st_keyup import st_keyup
 from config import *
 from helper import join_labels, register_encounter, empty_feed
-from sparql_functions import delete_encounter
+from sparql_functions import delete_encounter, get_labels
 from pixelfed_functions import get_statuses, get_attached_media
 from model import Location, ToAnnotate
 import folium
@@ -143,6 +143,7 @@ def suggest_species(to_annotate, user_info):
         )
         append_previews_to(lookup_table)
         lookup_table = join_labels(lookup_table)
+        buttons = get_labels([f"<{suggestion.species}>" for suggestion in lookup_table])
     else:
         st.session_state.last_location[to_annotate.id][0]
         lookup_table = dict()
@@ -162,17 +163,19 @@ def suggest_species(to_annotate, user_info):
                 ):
                     st.image(suggestion.thumbnail)
                 else:
-                    st.markdown("**No preview found**")
+                    st.markdown("*No preview found*")
             except:
-                st.markdown("__Preview error__")
+                st.markdown("*Preview error*")
         with column2:
+            # Enforcing the default language pref label as button- and marker label ensures uniform behaviour across existing and new annotations
+            button_label = buttons.get(suggestion.species, suggestion.prefLabel)
             st.button(
-                suggestion.prefLabel,
+                button_label,
                 key=f"{suggestion.species}_{to_annotate.id}",
                 on_click=update_plot_and_register_encounter,
                 kwargs=dict(
                     to_annotate=to_annotate,
-                    marker_label=suggestion.prefLabel,
+                    marker_label=button_label,
                     user=user_info.get("url"),
                     species=suggestion.species,
                     latitude=st.session_state.last_location[to_annotate.id][0],
@@ -182,7 +185,8 @@ def suggest_species(to_annotate, user_info):
         with column3:
             st.caption(
                 "",
-                help=suggestion.abstract,
+                # The help text links to the user's input, which may differ from the button label in English
+                help=f"## {suggestion.prefLabel}:\n{suggestion.abstract}",
             )
 
     # Pagination
