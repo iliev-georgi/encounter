@@ -7,6 +7,7 @@ from PIL import Image
 import branca
 from datetime import datetime
 import streamlit as st
+from strings import *
 
 
 def clear_keyup_input_for(input_id: str):
@@ -107,3 +108,7 @@ def build_popup_iframe(encounter: Encounter, thumbnail: bytes) -> branca.element
     )
 
     return iframe
+
+
+def empty_feed(photo_sharing_url: str):
+    st.warning(EMPTY_FEED.format(photo_sharing_url), icon=":material/owl:")

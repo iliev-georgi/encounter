@@ -8,7 +8,7 @@ from sparql_functions import (
 )
 from st_keyup import st_keyup
 from config import *
-from helper import join_labels, register_encounter
+from helper import join_labels, register_encounter, empty_feed
 from sparql_functions import delete_encounter
 from pixelfed_functions import get_statuses, get_attached_media
 from model import Location, ToAnnotate
@@ -294,6 +294,12 @@ def render_annotate(user_info):
     to_annotate_list = get_statuses(
         user_info["id"], st.session_state["token"]["access_token"]
     )
+
+    # Stop early in case of empty feed
+    if not to_annotate_list:
+        empty_feed(f"{PIXELFED_BASE_URL_SCHEME}://{PIXELFED_BASE_URL}")
+        return
+
     append_annotation_state_to(to_annotate_list)
 
     # Initialize state
