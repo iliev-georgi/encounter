@@ -9,6 +9,7 @@ from config import (
     PASTABYTES_ENCOUNTER,
 )
 from model import Suggestion, Encounter, Location, ToAnnotate
+from typing import Dict, List
 
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20, offset=0):
@@ -86,7 +87,7 @@ def append_previews_to(lookup_table, endpoint=DBPEDIA_SPARQL_ENDPOINT):
             0
         ]
         suggestion.abstract = thumbnails.get(
-            suggestion.wikipediaLink, ((None, "__No description available__"))
+            suggestion.wikipediaLink, ((None, f"*No description available, see [AVIO entry]({suggestion.species}) for details.*"))
         )[1]
 
 
@@ -195,7 +196,7 @@ def delete_encounter(
 
 def collect_encounters(
     context: str = PASTABYTES_ENCOUNTER, endpoint: str = AVIO_SPARQL_ENDPOINT
-) -> list[Encounter]:
+) -> List[Encounter]:
 
     sparql = SPARQLWrapper(endpoint)
     ENCOUNTER_ONTOLOGY = Namespace("https://encounter.pastabytes.com/v0.1.0/ontology/")
@@ -262,7 +263,7 @@ def collect_encounters(
 
 def get_labels(
     species: list[str], endpoint=AVIO_SPARQL_ENDPOINT, lang: str = "en"
-) -> dict:
+) -> Dict[str, str]:
     sparql = SPARQLWrapper(endpoint)
     query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>

@@ -1,4 +1,4 @@
-from model import Location, Encounter
+from model import Location, Encounter, Suggestion
 import hashlib
 from sparql_functions import insert_encounter
 from exception import SPARQLException
@@ -8,6 +8,7 @@ import branca
 from datetime import datetime
 import streamlit as st
 from strings import *
+from typing import List
 
 
 def clear_keyup_input_for(input_id: str):
@@ -23,10 +24,10 @@ def clear_keyup_input_for(input_id: str):
         st.session_state[to_clear] = ""
 
 
-def join_labels(lookup_table):
+def join_labels(lookup_table) -> List[Suggestion]:
     seen = dict()
     for suggestion in lookup_table:
-        suggestion.prefLabel = f"{suggestion.prefLabel} ({suggestion.language})"
+        suggestion.prefLabel = f"{suggestion.prefLabel.strip()} ({suggestion.language})"
         if suggestion.species in seen:
             seen[suggestion.species].prefLabel = (
                 f"{seen[suggestion.species].prefLabel} / {suggestion.prefLabel}"
