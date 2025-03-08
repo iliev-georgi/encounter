@@ -186,7 +186,7 @@ def suggest_species(to_annotate, user_info):
             st.caption(
                 "",
                 # The help text links to the user's input, which may differ from the button label in English
-                help=f"## {suggestion.prefLabel}:\n{suggestion.abstract}",
+                help=f"## {suggestion.prefLabel}\n{suggestion.abstract}",
             )
 
     # Pagination
