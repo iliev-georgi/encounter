@@ -1,11 +1,11 @@
 import streamlit as st
-from config import APP_TITLE
+from config import APP_TITLE, HAMBURGER_MENU_ITEMS
 from auth import sso_login_pixelfed
 from streamlit_option_menu import option_menu
 from options.annotate import render_annotate
 from options.explore import render_explore
 
-st.set_page_config(page_title=APP_TITLE)
+st.set_page_config(page_title=APP_TITLE, menu_items=HAMBURGER_MENU_ITEMS)
 
 st.header(APP_TITLE)
 
