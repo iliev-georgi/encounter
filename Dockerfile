@@ -10,4 +10,8 @@ EXPOSE 8501
 
 COPY . .
 
+ARG BUILD=Unknown
+
+ENV BUILD=$BUILD
+
 ENTRYPOINT ["./entrypoint.sh"]
