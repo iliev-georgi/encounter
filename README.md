@@ -180,14 +180,18 @@ The instructions below apply to the public experimental environment. For local d
 
 ### Onboarding new citizen ornithologist users
 1. Navigate to the [photo sharing app homepage](https://pixelfed.pastabytes.com)
-2. Sign up as a new user. The system is in alpha testing mode and all new users are subject to manual verification. Make sure you provide a valid email address and then request the manual verification option when prompted
-3. Let the administrator know that you have registered and are awaiting manual verification
-4. Once verified, log back in and post your first picture
+2. Sign up as a new user. Make sure you provide a valid email address. Confirm your email address by clicking the button in the email confirmation message you receive
+3. Clicking the confirmation button will take you back to the [photo sharing app](https://pixelfed.pastabytes.com) where you can post your first picture
 
 ### Annotating evidence
 1. Navigate to the [photo annotation app homepage](https://encounter.pastabytes.com)
 2. Click the `Login` button. Since the photo sharing app provides the SSO functionality, if prompted for a user name and password, log in as the user you created in the onboarding step
-3. Switch to the `Annotate` option. Use the UI controls to add the necessary encounter information (bird species, location) to each evidence (photo) plotted on the world map
+3. Switch to the `Annotate` option. Use the UI controls to add the necessary encounter information to each evidence:
+    - from the `Pin location` tab pick the location of the encounter on the world map
+    - from the `Search species` tab search for the bird you encountered using either English, Latin, Swedish or Finnish
+    - click the button corresponding to your selected species to finish annotating the evidence
+    - you can repeat the process also for existing annotations if adjustments/corrections are needed
+    - you can delete existing annotations from the `Delete encounter` tab
 
 ### Consuming data from the knowledge graph
 1. Switch to the `Explore` option. Use the UI controls to browse and inspect encounter data from the knowledge graph plotted on the world map

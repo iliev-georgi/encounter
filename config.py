@@ -44,7 +44,7 @@ RESULT_PAGE_SIZE = os.getenv("RESULT_PAGE_SIZE", 5)
 BUILD = os.getenv("BUILD", "Unknown")
 
 HAMBURGER_MENU_ITEMS = {
-    "Get Help": "https://github.com/iliev-georgi/encounter/blob/main/README.md",
+    "Get Help": "https://github.com/iliev-georgi/encounter/blob/main/README.md#usage",
     "Report a Bug": "https://github.com/users/iliev-georgi/projects/1",
     "About": f"**Build version** {BUILD}\n\n**GitHub** https://github.com/iliev-georgi/encounter\n\n**Photo sharing app** {PIXELFED_BASE_URL_SCHEME}://{PIXELFED_BASE_URL}\n\n**Semantic repository** {AVIO_SPARQL_ENDPOINT}",
 }
