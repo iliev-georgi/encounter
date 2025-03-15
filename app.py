@@ -5,7 +5,9 @@ from streamlit_option_menu import option_menu
 from options.annotate import render_annotate
 from options.explore import render_explore
 
-st.set_page_config(page_title=APP_TITLE, menu_items=HAMBURGER_MENU_ITEMS)
+st.set_page_config(
+    page_title=APP_TITLE, menu_items=HAMBURGER_MENU_ITEMS, page_icon=":material/raven:"
+)
 
 st.header(APP_TITLE)
 
@@ -16,11 +18,16 @@ st.divider()
 USER_INFO = sso_login_pixelfed()
 
 if "token" in st.session_state:
-    
-    selected = option_menu(None, ["Annotate", "Explore"], 
-        icons=['pin-map', 'map'], 
-        menu_icon="cast", default_index=0, orientation="horizontal")
-    
+
+    selected = option_menu(
+        None,
+        ["Annotate", "Explore"],
+        icons=["pin-map", "map"],
+        menu_icon="cast",
+        default_index=0,
+        orientation="horizontal",
+    )
+
     match selected:
         case "Annotate":
             render_annotate(USER_INFO)
