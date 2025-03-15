@@ -43,6 +43,11 @@ def get_attached_media(media_url, bearer_token) -> bytes:
         headers={"Authorization": f"Bearer {bearer_token}"},
     )
 
+    # This check should handle all cases of missing media, either due to deletion or insufficient permissions or otherwise
+    if r.status_code != 200:
+        with open("images/Not_found.jpg", "rb") as not_found:
+            return not_found.read()
+
     return r.content
 
 
