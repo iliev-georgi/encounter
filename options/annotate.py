@@ -140,6 +140,10 @@ def suggest_species(to_annotate, user_info):
     )
     current_search_term_evidence_pair = f"{name}_{to_annotate.id}"
     init_page_marker_for(current_search_term_evidence_pair, to_annotate.id)
+    
+    if name is not None:
+        name = name.strip()
+
     if name and len(name) > 2:
         lookup_table = get_filtered_list(
             name,
@@ -151,7 +155,6 @@ def suggest_species(to_annotate, user_info):
         lookup_table = join_labels(lookup_table)
         buttons = get_labels([f"<{suggestion.species}>" for suggestion in lookup_table])
     else:
-        st.session_state.last_location[to_annotate.id][0]
         lookup_table = dict()
 
     for suggestion in lookup_table:
