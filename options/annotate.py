@@ -8,13 +8,14 @@ from sparql_functions import (
 )
 from st_keyup import st_keyup
 from config import *
-from helper import join_labels, register_encounter, empty_feed
-from sparql_functions import delete_encounter, get_labels
+from helper import join_labels, build_encounter, clear_keyup_input_for, empty_feed
+from sparql_functions import delete_encounter, insert_encounter, get_labels
 from pixelfed_functions import get_statuses, get_attached_media
 from model import Location, ToAnnotate
 import folium
 from streamlit_folium import st_folium
 from datetime import datetime
+from exception import SPARQLException
 
 
 def update_plot_and_register_encounter(
@@ -39,8 +40,7 @@ def update_plot_and_register_encounter(
     to_annotate.annotated = True
 
     # persist encounter
-    register_encounter(
-        input_id=to_annotate.id,
+    encounter = build_encounter(
         time=to_annotate.time,
         user=user,
         evidence=to_annotate.preview_url,
@@ -48,6 +48,12 @@ def update_plot_and_register_encounter(
         latitude=latitude,
         longitude=longitude,
     )
+    
+    result = insert_encounter(encounter)
+    if not result:
+        raise SPARQLException("Failed to register encounter.")
+
+    clear_keyup_input_for(to_annotate.id)
 
     st.toast(f"Done {update_verb.lower()} encounter.")
 
@@ -134,7 +140,7 @@ def suggest_species(to_annotate, user_info):
     )
     current_search_term_evidence_pair = f"{name}_{to_annotate.id}"
     init_page_marker_for(current_search_term_evidence_pair, to_annotate.id)
-    if name and len(name) > 3:
+    if name and len(name) > 2:
         lookup_table = get_filtered_list(
             name,
             limit=RESULT_PAGE_SIZE,
