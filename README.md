@@ -188,8 +188,12 @@ The instructions below apply to the public experimental environment. For local d
 2. Click the `Login` button. Since the photo sharing app provides the SSO functionality, if prompted for a user name and password, log in as the user you created in the onboarding step
 3. Switch to the `Annotate` option. Use the UI controls to add the necessary encounter information to each evidence:
     - from the `Pin location` tab pick the location of the encounter on the world map
-    - from the `Search species` tab search for the bird you encountered using either English, Latin, Swedish or Finnish
-    - click the button corresponding to your selected species to finish annotating the evidence
+    - from the `Search species` tab search for the bird you encountered using either English, Latin, Swedish or Finnish. Full-text search is performed over the preferred label (https://www.w3.org/2009/08/skos-reference/skos.html#prefLabel) values in any of the languages. All tokens (words) in your input must be present in any of the language versions for the preferred label, where for tokens (words) longer than 3 characters a wildcard _suffix_ search is performed. E.g. 
+        - `fox spar` should return _**fox spar**_**row** but not **fox kestrel**
+        - `fox kes` should not return anything, but `fox kest` should return _**fox kest**_**rel**
+        - the result set for `stork` should include **black** _**stork**_, and the information section for that entry should specify that the input matched the labels in two languages: English `en` and Swedish `sv` as **black stork (en) / svart stork (sv)**
+        - the order of the search terms should not change the results: `fox spar` and `spar fox` should return identical result sets
+    - click the button corresponding to your selected species to finish annotating the evidence. **NB!** _Due to the multilingual nature of the database, you may experience discrepancy between the suggested label on the button and your input. In such case, using the information icon next to the button you can see the exact label(s) matching your input, along with a short description of the suggested species_
     - you can repeat the process also for existing annotations if adjustments/corrections are needed
     - you can delete existing annotations from the `Delete encounter` tab
 

@@ -1,7 +1,5 @@
 from model import Location, Encounter, Suggestion
 import hashlib
-from sparql_functions import insert_encounter
-from exception import SPARQLException
 import base64, io
 from PIL import Image
 import branca
@@ -9,6 +7,7 @@ from datetime import datetime
 import streamlit as st
 from strings import *
 from typing import List
+from exception import UserInputException
 
 
 def clear_keyup_input_for(input_id: str):
@@ -38,8 +37,7 @@ def join_labels(lookup_table) -> List[Suggestion]:
     return seen.values()
 
 
-def register_encounter(
-    input_id=None,
+def build_encounter(
     time=None,
     user=None,
     evidence=None,
@@ -47,7 +45,7 @@ def register_encounter(
     latitude=Location.latitude,
     longitude=Location.longitude,
     context=Encounter.context,
-):
+) -> Encounter:
 
     location_seed = f"{latitude}_{longitude}"
     location = Location(
@@ -67,14 +65,7 @@ def register_encounter(
         context=context,
     )
 
-    try:
-        result = insert_encounter(encounter)
-        if not result:
-            raise SPARQLException(result.response.read())
-    except Exception:
-        print("SPARQL update failed.")
-
-    clear_keyup_input_for(input_id)
+    return encounter
 
 
 def get_jpeg_thumbnail(attached_media: bytes, x=150, y=150):
@@ -113,3 +104,21 @@ def build_popup_iframe(encounter: Encounter, thumbnail: bytes) -> branca.element
 
 def empty_feed(photo_sharing_url: str):
     st.warning(EMPTY_FEED.format(photo_sharing_url), icon=":material/owl:")
+
+def build_search_expression(partial: str) -> str:
+    """Enforcing minimal search term length for the _bif:contains_ predicate used for full-text search over indexed prefLabel values; adding flexibility by wildcard suffixes on elligible tokens (length above 3 characters)
+
+    Args:
+        partial (str): _The user's raw input in the search field_
+
+    Returns:
+        str: _Valid Boolean search expression combining all tokens in the user's raw input_
+    """
+    if partial is None:
+        raise UserInputException
+    
+    tokens = [f"'{token}*'" if len(token) > 3 else f"'{token}'" for token in partial.split()]
+
+    search_expression = " AND ".join(tokens)
+
+    return search_expression

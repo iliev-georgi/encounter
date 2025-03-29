@@ -10,16 +10,18 @@ from config import (
 )
 from model import Suggestion, Encounter, Location, ToAnnotate
 from typing import Dict, List
+from helper import build_search_expression
 
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20, offset=0):
     sparql = SPARQLWrapper(endpoint)
+    search_expression = build_search_expression(partial=partial)
     query = f"""
             PREFIX avio: <http://www.yso.fi/onto/avio/>
             SELECT * WHERE {{
             ?species a avio:species .
             ?species skos:prefLabel ?prefLabel .
-            ?prefLabel bif:contains "'{partial}*'" .
+            ?prefLabel bif:contains "{search_expression}" .
             OPTIONAL {{
                     ?species avio:linkToEnglishWikipedia ?wikipediaLink .
                     }}
