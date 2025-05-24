@@ -8,9 +8,9 @@ from config import (
     LOCAL_SPARQL_PASSWORD,
     PASTABYTES_ENCOUNTER,
 )
-from model import Suggestion, Encounter, Location, ToAnnotate
+from src.model import Suggestion, Encounter, Location, ToAnnotate
 from typing import Dict, List
-from helper import build_search_expression
+from src.helper import build_search_expression
 
 
 def get_filtered_list(partial, endpoint=AVIO_SPARQL_ENDPOINT, limit=20, offset=0):

@@ -1,9 +1,9 @@
 import streamlit as st
 import folium
-from sparql_functions import collect_encounters, get_labels
-from pixelfed_functions import get_attached_media
-from helper import get_jpeg_thumbnail, build_popup_iframe
-from model import Location
+from src.sparql_functions import collect_encounters, get_labels
+from src.pixelfed_functions import get_attached_media
+from src.helper import get_jpeg_thumbnail, build_popup_iframe
+from src.model import Location
 
 
 def render_explore(
