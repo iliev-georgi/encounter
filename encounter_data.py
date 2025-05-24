@@ -1,5 +1,5 @@
 from faker import Faker
-from helper import register_encounter
+from src.helper import register_encounter
 import random
 
 fake = Faker()

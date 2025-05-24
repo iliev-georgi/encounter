@@ -1,7 +1,7 @@
 import requests
 import streamlit as st
 from config import PIXELFED_BASE_URL, PIXELFED_BASE_URL_SCHEME
-from model import ToAnnotate
+from src.model import ToAnnotate
 from urllib.parse import urlparse, urlunparse
 from dateutil import parser
 import json
