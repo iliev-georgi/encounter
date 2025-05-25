@@ -1,0 +1,43 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set env
+      run: if output=$(git status --porcelain) && [ -z "$output" ]; then BUILD=$(git rev-parse --short HEAD); else BUILD=$(git rev-parse --short HEAD)-DIRTY; fi; echo "BUILD=$BUILD" >> $GITHUB_ENV
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 'Login to GitHub Container Registry'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GH_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        build-args: |
+          "BUILD=${{ env.BUILD }}"
+        push: true
+        tags: |
+          ghcr.io/iliev-georgi/pastabytes-encounter:latest
+          ghcr.io/iliev-georgi/pastabytes-encounter:${{ env.BUILD }}
