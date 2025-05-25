@@ -10,6 +10,8 @@ EXPOSE 8501
 
 COPY . .
 
+RUN python -m pytest -v
+
 ARG BUILD=Unknown
 
 ENV BUILD=$BUILD
