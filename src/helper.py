@@ -8,6 +8,7 @@ import streamlit as st
 from src.strings import *
 from typing import List
 from src.exception import UserInputException
+import string
 
 
 def clear_keyup_input_for(input_id: str):
@@ -116,8 +117,12 @@ def build_search_expression(partial: str) -> str:
     """
     if partial is None:
         raise UserInputException
-    
-    tokens = [f"'{token}*'" if len(token) > 3 else f"'{token}'" for token in partial.split()]
+
+    # Remove punctuation marks that would cause Virtuoso SPARQL errors
+    translation_table = str.maketrans({c: ' ' for c in string.punctuation})
+    sanitized_input = partial.translate(translation_table)
+
+    tokens = [f"'{token}*'" if len(token) > 3 else f"'{token}'" for token in sanitized_input.split()]
 
     search_expression = " AND ".join(tokens)
 
